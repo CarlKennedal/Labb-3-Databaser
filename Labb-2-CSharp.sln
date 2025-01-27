@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Labb-2-CSharp", "Labb-2-CSharp\Labb-2-CSharp.csproj", "{B54EB03E-5EA5-4B81-BFB0-E51F7AB858AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B54EB03E-5EA5-4B81-BFB0-E51F7AB858AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B54EB03E-5EA5-4B81-BFB0-E51F7AB858AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B54EB03E-5EA5-4B81-BFB0-E51F7AB858AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B54EB03E-5EA5-4B81-BFB0-E51F7AB858AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {11215D6B-9C65-435B-BD21-D7D0A9F98980}
+	EndGlobalSection
+EndGlobal
