@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 public abstract class LivingElement : LevelElement
 {
-    public abstract int healthPoints { get; set; }
+    public abstract int HealthPoints { get; set; }
     public abstract string Name { get; set; }
     public abstract Dice attackDice { get; set; }
     public abstract Dice defenseDice { get; set; }

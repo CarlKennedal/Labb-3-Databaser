@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -8,10 +10,13 @@ using System.Threading.Tasks;
 
 class Snake : Enemy
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
     public override char Type { get; set; } = 's';
     public override Position Position { get; set; }
     public override string Name { get; set; } = "Snake";
-    public override int healthPoints { get; set; } = 25;
+    public override int HealthPoints { get; set; } = 25;
     public override Dice attackDice { get; set; } = new Dice(3, 4, 2);
     public override Dice defenseDice { get; set; } = new Dice(1, 8, 0);
     public override ConsoleColor Color { get; set; } = ConsoleColor.Green;

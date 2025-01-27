@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -14,8 +15,9 @@ public abstract class LevelElement
     public abstract char Type { get; set; }
     public abstract ConsoleColor Color { get; set; }
     public bool IsColliding { get; set; }
-    public LevelData LevelData { get; init; }
     public bool IsVisible { get; set; }
+    [BsonIgnore]
+    public LevelData LevelData { get; init; }
     public void Draw(LevelData level)
     {
         Console.ForegroundColor = Color;

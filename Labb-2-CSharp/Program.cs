@@ -1,26 +1,43 @@
-﻿using System.Linq;
+﻿using Labb_2_CSharp;
+using MongoDB.Driver;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
-LevelData levelEtt = new LevelData();
 
+LevelData levelEtt = new LevelData();
 levelEtt.Load("Level1.txt");
-Player player = levelEtt.elements.First(e => e is Player)as Player;
+Player player = levelEtt.elements.First(e => e is Player) as Player;
+Console.SetCursorPosition(0, 23);
+Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
+
 
 while (true)
 {
-    RenderDistance(player, levelEtt);
-    foreach (LevelElement draw in levelEtt.elements)
+    var keyPressed = Console.ReadKey(intercept: true).Key;
+    if (keyPressed == ConsoleKey.K)
     {
-        if (!draw.IsVisible)
-        {
-            continue;
-        }
-        draw.Draw(levelEtt);
+        SaveGame(levelEtt);
     }
-    foreach (LivingElement mobs in levelEtt.elements.ToList().OfType<LivingElement>())
+    else if (keyPressed == ConsoleKey.L)
     {
-        mobs.Update();
+        //    LoadGame();
+    }
+    else
+    {
+        RenderDistance(player, levelEtt);
+        foreach (LevelElement draw in levelEtt.elements)
+        {
+            if (draw.IsVisible)
+            {
+                draw.Draw(levelEtt);
+            }
+        }
+        player.PlayerUpdate(keyPressed);
+        foreach (LivingElement mobs in levelEtt.elements.OfType<LivingElement>())
+        {
+            mobs.Update();
+        }
     }
 }
 
@@ -43,6 +60,70 @@ static void RenderDistance(Player player, LevelData level)
         }
     }
 }
+static void SaveGame(LevelData levelEtt)
+{
+    var mongoContext = new MongoDBContext("DungeonCrawlDB");
+    var playersCollection = mongoContext.GetCollection<Player>("Players");
+    var wallsCollection = mongoContext.GetCollection<Wall>("Walls");
+    var ratsCollection = mongoContext.GetCollection<Rat>("Rats");
+    var snakesCollection = mongoContext.GetCollection<Snake>("Snakes");
+
+    foreach (var element in levelEtt.elements)
+    {
+        if (element is Player player)
+        {
+            playersCollection.InsertOne(player);
+        }
+        else if (element is Wall wall)
+        {
+            wallsCollection.InsertOne(wall);
+        }
+        else if (element is Rat rat)
+        {
+            ratsCollection.InsertOne(rat);
+        }
+        else if (element is Snake snake)
+        {
+            snakesCollection.InsertOne(snake);
+        }
+    }
+}
+
+static void LoadGame(LevelData levelEtt)
+{
+    var mongoContext = new MongoDBContext("DungeonCrawlDB");
+    var playersCollection = mongoContext.GetCollection<Player>("Players");
+    var ratsCollection = mongoContext.GetCollection<Rat>("Rats");
+    var snakesCollection = mongoContext.GetCollection<Snake>("Snakes");
+    var wallsCollection = mongoContext.GetCollection<Wall>("Walls");
+
+    var players = playersCollection.Find(_ => true).ToList();
+    var rats = ratsCollection.Find(_ => true).ToList();
+    var snakes = snakesCollection.Find(_ => true).ToList();
+    var walls = wallsCollection.Find(_ => true).ToList();
+
+    levelEtt.elements.Clear();
+
+    foreach (var player in players)
+    {
+        levelEtt.elements.Add(player);
+    }
+
+    foreach (var rat in rats)
+    {
+        levelEtt.elements.Add(rat);
+    }
+
+    foreach (var snake in snakes)
+    {
+        levelEtt.elements.Add(snake);
+    }
+
+    foreach (var wall in walls)
+    {
+        levelEtt.elements.Add(wall);
+    }
+}
 
 public class CollisionHandler
 {
@@ -57,10 +138,10 @@ public class CollisionHandler
     {
         foreach (var element in level.elements)
         {
-            if(element.Position.X == x && element.Position.Y == y)
+            if (element.Position.X == x && element.Position.Y == y)
             {
                 return element;
-            }            
+            }
         }
         return null;
     }
@@ -81,16 +162,16 @@ public class CombatHandler
         {
             damage = 0;
         }
-        attacker.attackDice.ToString(attacker, defender, damage,level);
+        attacker.attackDice.ToString(attacker, defender, damage, level);
         if (damage > 0)
         {
-            defender.healthPoints -= damage;
+            defender.HealthPoints -= damage;
         }
-        if (defender.healthPoints > 0)
+        if (defender.HealthPoints > 0)
         {
             CounterAttack(defender, attacker);
         }
-        else if (defender.healthPoints < 1)
+        else if (defender.HealthPoints < 1)
         {
             level.elements.Remove(defender);
         }
@@ -104,14 +185,15 @@ public class CombatHandler
         {
             damage = 0;
         }
-        attacker.attackDice.ToString(attacker, defender, damage,level);
+        attacker.attackDice.ToString(attacker, defender, damage, level);
         if (damage > 0)
         {
-            defender.healthPoints -= damage;
+            defender.HealthPoints -= damage;
         }
-        else if (defender.healthPoints < 1)
+        else if (defender.HealthPoints < 1)
         {
             level.elements.Remove(defender);
         }
     }
+
 }
