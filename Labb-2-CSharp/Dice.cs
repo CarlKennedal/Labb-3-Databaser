@@ -33,11 +33,11 @@ public class Dice
         total += modifier;
         return total;
     }
-    public void ToString(LivingElement attacker, LivingElement defender, int damage,LevelData level)
+    public void ToString(LevelElement attacker, LevelElement defender, int damage,LevelData level)
     {
         level.damageOutput += 1;
         Console.SetCursorPosition(56, level.damageOutput);
-        if (attacker is Enemy)
+        if (attacker is Rat ||attacker is Snake)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{attacker} attacks {defender} with a roll of {numberOfDice}d{sidesPerDice} + {modifier} dealing {damage} damage.");

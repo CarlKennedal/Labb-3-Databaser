@@ -15,17 +15,15 @@ enum Direction
     LEFT,
 };
 
-class Rat : Enemy
+[BsonDiscriminator("Rat")]
+class Rat : LevelElement
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+   
     public override char Type { get; set; } = 'r';
     public override Position Position { get; set; }
     public override Dice attackDice { get; set; } = new Dice(1, 6, 3);
     public override Dice defenseDice { get; set; } = new Dice(1, 6, 1);
     public override string Name { get; set; } = "Rat";
-    public override int HealthPoints { get; set; } = 10;
     public override ConsoleColor Color { get; set; } = ConsoleColor.Red;
 
 

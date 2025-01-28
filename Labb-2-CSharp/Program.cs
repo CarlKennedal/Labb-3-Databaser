@@ -8,35 +8,48 @@ using static System.Net.Mime.MediaTypeNames;
 LevelData levelEtt = new LevelData();
 levelEtt.Load("Level1.txt");
 Player player = levelEtt.elements.First(e => e is Player) as Player;
+player.IsVisible = true;
+CollisionHandler collisionHandler = new CollisionHandler(levelEtt);
 Console.SetCursorPosition(0, 23);
 Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
-
 
 while (true)
 {
     var keyPressed = Console.ReadKey(intercept: true).Key;
+    levelEtt.ConsoleKey = keyPressed;
     if (keyPressed == ConsoleKey.K)
     {
         SaveGame(levelEtt);
     }
     else if (keyPressed == ConsoleKey.L)
     {
-        //    LoadGame();
-    }
-    else
-    {
+        Console.Clear();
+        LoadGame(ref levelEtt);
+        collisionHandler.UpdateLevelData(levelEtt);
+        Console.SetCursorPosition(0, 23);
+        Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
         RenderDistance(player, levelEtt);
         foreach (LevelElement draw in levelEtt.elements)
         {
-            if (draw.IsVisible)
+            if (draw.IsVisible == true)
             {
                 draw.Draw(levelEtt);
             }
         }
-        player.PlayerUpdate(keyPressed);
-        foreach (LivingElement mobs in levelEtt.elements.OfType<LivingElement>())
+    }
+    else
+    {
+        RenderDistance(player, levelEtt);
+        foreach (LevelElement mobs in levelEtt.elements.ToList())
         {
-            mobs.Update();
+            if (mobs is not Wall)
+            {
+                mobs.Update();
+            }
+            if (mobs.IsVisible == true)
+            {
+                mobs.Draw(levelEtt);
+            }
         }
     }
 }
@@ -52,76 +65,83 @@ static void RenderDistance(Player player, LevelData level)
         }
         if (distance >= 5)
         {
-            if (otherElement is Enemy)
+            if (otherElement is Rat || otherElement is Snake)
             {
-                var enemy = (Enemy)otherElement;
-                enemy.IsVisible = false;
+                if (otherElement is Rat rat)
+                {
+                    rat.IsVisible = false;
+                }
+                else if (otherElement is Snake snake)
+                {
+                    snake.IsVisible = false;
+                }
             }
         }
     }
 }
 static void SaveGame(LevelData levelEtt)
 {
-    var mongoContext = new MongoDBContext("DungeonCrawlDB");
-    var playersCollection = mongoContext.GetCollection<Player>("Players");
-    var wallsCollection = mongoContext.GetCollection<Wall>("Walls");
-    var ratsCollection = mongoContext.GetCollection<Rat>("Rats");
-    var snakesCollection = mongoContext.GetCollection<Snake>("Snakes");
+    var mongoContext = new MongoDBContext("CarlKennedal");
 
-    foreach (var element in levelEtt.elements)
+    var elementsCollection = mongoContext.GetCollection<LevelElement>("LevelElements");
+
+    elementsCollection.DeleteMany(_ => true);
+
+    var allElements = levelEtt.elements.Select(e =>
     {
-        if (element is Player player)
+        e.Id = Guid.NewGuid().ToString();
+        e.Type = e switch
         {
-            playersCollection.InsertOne(player);
-        }
-        else if (element is Wall wall)
-        {
-            wallsCollection.InsertOne(wall);
-        }
-        else if (element is Rat rat)
-        {
-            ratsCollection.InsertOne(rat);
-        }
-        else if (element is Snake snake)
-        {
-            snakesCollection.InsertOne(snake);
-        }
+            Player => '@',
+            Wall => '#',
+            Rat => 'r',
+            Snake => 's',
+
+        };
+        return e;
+    }).ToList();
+
+    if (allElements.Any())
+    {
+        elementsCollection.InsertMany(allElements);
     }
 }
 
-static void LoadGame(LevelData levelEtt)
+static void LoadGame(ref LevelData levelEtt)
 {
-    var mongoContext = new MongoDBContext("DungeonCrawlDB");
-    var playersCollection = mongoContext.GetCollection<Player>("Players");
-    var ratsCollection = mongoContext.GetCollection<Rat>("Rats");
-    var snakesCollection = mongoContext.GetCollection<Snake>("Snakes");
-    var wallsCollection = mongoContext.GetCollection<Wall>("Walls");
-
-    var players = playersCollection.Find(_ => true).ToList();
-    var rats = ratsCollection.Find(_ => true).ToList();
-    var snakes = snakesCollection.Find(_ => true).ToList();
-    var walls = wallsCollection.Find(_ => true).ToList();
-
+    levelEtt = new LevelData();
+    levelEtt.damageOutput = -1;
     levelEtt.elements.Clear();
 
-    foreach (var player in players)
-    {
-        levelEtt.elements.Add(player);
-    }
+    var mongoContext = new MongoDBContext("CarlKennedal");
+    var elementsCollection = mongoContext.GetCollection<LevelElement>("LevelElements");
 
-    foreach (var rat in rats)
-    {
-        levelEtt.elements.Add(rat);
-    }
 
-    foreach (var snake in snakes)
-    {
-        levelEtt.elements.Add(snake);
-    }
+    var savedElements = elementsCollection.Find(_ => true).ToList();
 
-    foreach (var wall in walls)
+    foreach (var element in savedElements)
     {
-        levelEtt.elements.Add(wall);
+        if (element is Player player)
+        {
+            levelEtt.elements.Add(player);
+        }
+        else if (element is Wall wall)
+        {
+            levelEtt.elements.Add(wall);
+
+        }
+        else if (element is Rat rat)
+        {
+            levelEtt.elements.Add(rat);
+        }
+        else if (element is Snake snake)
+        {
+            levelEtt.elements.Add(snake);
+        }
+    }
+    foreach (var element in levelEtt.elements)
+    {
+        element.LevelData = levelEtt;
     }
 }
 
@@ -145,6 +165,10 @@ public class CollisionHandler
         }
         return null;
     }
+    public void UpdateLevelData(LevelData level)
+    {
+        this.level = level;
+    }
 }
 public class CombatHandler
 {
@@ -153,7 +177,7 @@ public class CombatHandler
     {
         this.level = level;
     }
-    public void Attack(LivingElement attacker, LivingElement defender)
+    public void Attack(LevelElement attacker, LevelElement defender)
     {
         int atack = attacker.attackDice.Throw();
         int defense = defender.defenseDice.Throw();
@@ -176,7 +200,7 @@ public class CombatHandler
             level.elements.Remove(defender);
         }
     }
-    public void CounterAttack(LivingElement attacker, LivingElement defender)
+    public void CounterAttack(LevelElement attacker, LevelElement defender)
     {
         int atack = attacker.attackDice.Throw();
         int defense = defender.defenseDice.Throw();
@@ -195,5 +219,4 @@ public class CombatHandler
             level.elements.Remove(defender);
         }
     }
-
 }

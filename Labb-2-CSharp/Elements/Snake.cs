@@ -8,15 +8,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-class Snake : Enemy
+[BsonDiscriminator("Snake")]
+class Snake : LevelElement
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
     public override char Type { get; set; } = 's';
     public override Position Position { get; set; }
     public override string Name { get; set; } = "Snake";
-    public override int HealthPoints { get; set; } = 25;
     public override Dice attackDice { get; set; } = new Dice(3, 4, 2);
     public override Dice defenseDice { get; set; } = new Dice(1, 8, 0);
     public override ConsoleColor Color { get; set; } = ConsoleColor.Green;
