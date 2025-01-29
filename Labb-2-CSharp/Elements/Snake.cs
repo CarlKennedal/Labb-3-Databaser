@@ -20,27 +20,27 @@ class Snake : LevelElement
 
     public override void Update()
     {
-        MoveSnake(this, LevelData.leveldataPlayer);
+        MoveSnake(this, LevelData);
     }
-    public void MoveSnake(Snake snake, Player player)
+    public void MoveSnake(Snake snake, LevelData levelData)
     {
         Console.ForegroundColor = ConsoleColor.White;
-        int distance = snake.Position.DistanceTo(player.Position);
+        int distance = snake.Position.DistanceTo(LevelData.player.Position);
         if (distance <= 2)
         {
-            if (player.Position.Y <= snake.Position.Y - 2)
+            if (LevelData.player.Position.Y <= snake.Position.Y - 2)
             {
                 Move(y: +1);
             }
-            else if (player.Position.X <= snake.Position.X - 2)
+            else if (LevelData.player.Position.X <= snake.Position.X - 2)
             {
                 Move(x: +1);
             }
-            else if (player.Position.Y <= snake.Position.Y + 2)
+            else if (LevelData.player.Position.Y <= snake.Position.Y + 2)
             {
                 Move(y: -1);
             }
-            else if (player.Position.X <= snake.Position.X + 2)
+            else if (LevelData.player.Position.X <= snake.Position.X + 2)
             {
                 Move(x: -1);
             }

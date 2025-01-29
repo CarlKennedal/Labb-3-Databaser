@@ -5,54 +5,55 @@ using System.Reflection.Emit;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 
-LevelData levelEtt = new LevelData();
-levelEtt.Load("Level1.txt");
-Player player = levelEtt.elements.First(e => e is Player) as Player;
-player.IsVisible = true;
-CollisionHandler collisionHandler = new CollisionHandler(levelEtt);
-Console.SetCursorPosition(0, 23);
-Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
+StartScreen();
 
-while (true)
+
+static void GameLoop(LevelData levelEtt, Player player)
 {
-    var keyPressed = Console.ReadKey(intercept: true).Key;
-    levelEtt.ConsoleKey = keyPressed;
-    if (keyPressed == ConsoleKey.K)
+    player = levelEtt.elements.First(e => e is Player) as Player;
+    player.IsVisible = true;
+    CollisionHandler collisionHandler = new CollisionHandler(levelEtt);
+
+    Console.SetCursorPosition(0, 23);
+    Console.WriteLine("Press 'K' to save game, 'L' to load.");
+    Console.SetCursorPosition(0, 24);
+    Console.WriteLine("Press ESC to exit.");
+    RenderLevel(levelEtt, player);
+    Console.SetCursorPosition(0, 0);
+    Console.Write($"Player: {player.HealthPoints} HP, {player.attackDice.numberOfDice}d{player.attackDice.sidesPerDice}+{player.attackDice.modifier} ATK, {player.defenseDice.numberOfDice}d{player.defenseDice.sidesPerDice}+{player.defenseDice.modifier} DEF.\n Has survived a total of 0 turns!");
+
+
+    while (true)
     {
-        SaveGame(levelEtt);
-    }
-    else if (keyPressed == ConsoleKey.L)
-    {
-        Console.Clear();
-        LoadGame(ref levelEtt);
-        collisionHandler.UpdateLevelData(levelEtt);
-        Console.SetCursorPosition(0, 23);
-        Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
-        RenderDistance(player, levelEtt);
-        foreach (LevelElement draw in levelEtt.elements)
+        ConsoleKey keyPressed = Console.ReadKey(intercept: true).Key;
+        levelEtt.ConsoleKey = keyPressed;
+
+        if (keyPressed == ConsoleKey.K)
         {
-            if (draw.IsVisible == true)
-            {
-                draw.Draw(levelEtt);
-            }
+            SaveGame(levelEtt);
         }
-    }
-    else
-    {
-        RenderDistance(player, levelEtt);
-        foreach (LevelElement mobs in levelEtt.elements.ToList())
+        else if (keyPressed == ConsoleKey.Escape)
         {
-            if (mobs is not Wall)
-            {
-                mobs.Update();
-            }
-            if (mobs.IsVisible == true)
-            {
-                mobs.Draw(levelEtt);
-            }
+            Console.Clear();
+            Console.SetCursorPosition(0, 0);
+            StartScreen();
+        }
+        else if (keyPressed == ConsoleKey.L)
+        {
+            Console.Clear();
+            LoadGame(ref levelEtt, ref player);
+            collisionHandler.UpdateLevelData(levelEtt);
+            Console.SetCursorPosition(0, 23);
+            Console.WriteLine("Press 'K' to save game or 'L' to load previous game.");
+            RenderLevel(levelEtt, player);
+        }
+        else
+        {
+            UpdateGame(levelEtt, player);
         }
     }
 }
+
 
 static void RenderDistance(Player player, LevelData level)
 {
@@ -107,7 +108,7 @@ static void SaveGame(LevelData levelEtt)
     }
 }
 
-static void LoadGame(ref LevelData levelEtt)
+static void LoadGame(ref LevelData levelEtt, ref Player player)
 {
     levelEtt = new LevelData();
     levelEtt.damageOutput = -1;
@@ -116,19 +117,18 @@ static void LoadGame(ref LevelData levelEtt)
     var mongoContext = new MongoDBContext("CarlKennedal");
     var elementsCollection = mongoContext.GetCollection<LevelElement>("LevelElements");
 
-
     var savedElements = elementsCollection.Find(_ => true).ToList();
 
     foreach (var element in savedElements)
     {
-        if (element is Player player)
+        if (element is Player loadedPlayer)
         {
-            levelEtt.elements.Add(player);
+            levelEtt.elements.Add(loadedPlayer);
+            levelEtt.player = loadedPlayer;
         }
         else if (element is Wall wall)
         {
             levelEtt.elements.Add(wall);
-
         }
         else if (element is Rat rat)
         {
@@ -139,12 +139,82 @@ static void LoadGame(ref LevelData levelEtt)
             levelEtt.elements.Add(snake);
         }
     }
+
     foreach (var element in levelEtt.elements)
     {
         element.LevelData = levelEtt;
     }
+    player = levelEtt.elements.FirstOrDefault(e => e is Player) as Player;
+    RenderLevel(levelEtt, player);
 }
+static void UpdateGame(LevelData levelEtt, Player player)
+{
+    RenderDistance(player, levelEtt);
+    foreach (LevelElement mobs in levelEtt.elements.ToList())
+    {
+        if (mobs is not Wall)
+        {
+            mobs.Update();
+        }
+        if (mobs.IsVisible == true)
+        {
+            mobs.Draw(levelEtt);
+        }
+    }
+}
+static void StartScreen()
+{
+    Console.WriteLine("  ·▄▄▄▄  ▄• ▄▌ ▐ ▄  ▄▄ • ▄▄▄ .       ▐ ▄      ▄▄· ▄▄▄   ▄▄▄· ▄▄▌ ▐ ▄▌▄▄▌  ▄▄▄ .▄▄▄  \r\n  ██▪ ██ █▪██▌•█▌▐█▐█ ▀ ▪▀▄.▀·▪     •█▌▐█    ▐█ ▌▪▀▄ █·▐█ ▀█ ██· █▌▐███•  ▀▄.▀·▀▄ █·\r\n  ▐█· ▐█▌█▌▐█▌▐█▐▐▌▄█ ▀█▄▐▀▀▪▄ ▄█▀▄ ▐█▐▐▌    ██ ▄▄▐▀▀▄ ▄█▀▀█ ██▪▐█▐▐▌██▪  ▐▀▀▪▄▐▀▀▄ \r\n  ██. ██ ▐█▄█▌██▐█▌▐█▄▪▐█▐█▄▄▌▐█▌.▐▌██▐█▌    ▐███▌▐█•█▌▐█ ▪▐▌▐█▌██▐█▌▐█▌▐▌▐█▄▄▌▐█•█▌\r\n  ▀▀▀▀▀•  ▀▀▀ ▀▀ █▪·▀▀▀▀  ▀▀▀  ▀█▄▀▪▀▀ █▪    ·▀▀▀ .▀  ▀ ▀  ▀  ▀▀▀▀ ▀▪.▀▀▀  ▀▀▀ .▀  ▀\r\n\r\n\t\t  Press 'Space' to start or 'L' to load your latest save.\r\n\t\t\t\tPress 'Escape' to exit.");
+   
+    ConsoleKey keyPressed;
+    do
+    {
+        keyPressed = Console.ReadKey(intercept: true).Key;
+    }
+    while (keyPressed != ConsoleKey.Spacebar && keyPressed != ConsoleKey.L && keyPressed != ConsoleKey.Escape);
 
+    LevelData levelEtt = new LevelData();
+    Player player = null;
+
+    if (keyPressed == ConsoleKey.Spacebar)
+    {
+        levelEtt.Load("Level1.txt");
+        player = levelEtt.elements.FirstOrDefault(e => e is Player) as Player;
+        if (player != null) player.IsVisible = true;
+        Console.Clear();
+    }
+    else if (keyPressed == ConsoleKey.L)
+    {
+        Console.Clear();
+        Console.WriteLine("Loading previous game...");
+        LoadGame(ref levelEtt, ref player); // 👈 Pass player reference
+    }
+    else
+    {
+        Console.Clear();
+        Environment.Exit(0);
+    }
+    if (player != null)
+    {
+        GameLoop(levelEtt, player);
+    }
+    else
+    {
+        Console.WriteLine("No player found. Exiting...");
+        Environment.Exit(0);
+    }
+}
+static void RenderLevel(LevelData levelEtt, Player player)
+{
+    RenderDistance(player, levelEtt);
+    foreach (LevelElement draw in levelEtt.elements)
+    {
+        if (draw.IsVisible)
+        {
+            draw.Draw(levelEtt);
+        }
+    }
+}
 public class CollisionHandler
 {
     private LevelData level;

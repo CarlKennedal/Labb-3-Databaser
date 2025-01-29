@@ -11,7 +11,7 @@ public class LevelData
 {
     public int damageOutput { get; set; } = -1;
     public List<LevelElement> elements { get; set; } = new List<LevelElement>();
-    public static Player leveldataPlayer;
+    public Player player {  get; set; }
     public ConsoleKey? ConsoleKey {  get; set; } = System.ConsoleKey.None;
     public void Load(string fileName)
     {
@@ -28,7 +28,7 @@ public class LevelData
                     switch (c)
                     {
                         case '@':
-                            var player = leveldataPlayer = new Player() { LevelData = this };
+                            player = new Player() { LevelData = this };
                             player.Position = new Position(indexOfX, indexOfY);
                             player.HealthPoints = 100;
                             elements.Add(player);

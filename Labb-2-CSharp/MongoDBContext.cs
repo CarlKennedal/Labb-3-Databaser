@@ -15,31 +15,43 @@ namespace Labb_2_CSharp
             RegisterClassMaps();
         }
 
-        private void RegisterClassMaps()
+        private static void RegisterClassMaps()
         {
-            BsonClassMap.RegisterClassMap<Player>(cm =>
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Player)))
             {
-                cm.AutoMap();
-                cm.SetDiscriminator("Player");
-            });
+                BsonClassMap.RegisterClassMap<Player>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetDiscriminator("Player");
+                });
+            }
 
-            BsonClassMap.RegisterClassMap<Rat>(cm =>
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Wall)))
             {
-                cm.AutoMap();
-                cm.SetDiscriminator("Rat");
-            });
+                BsonClassMap.RegisterClassMap<Wall>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetDiscriminator("Wall");
+                });
+            }
 
-            BsonClassMap.RegisterClassMap<Snake>(cm =>
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Rat)))
             {
-                cm.AutoMap();
-                cm.SetDiscriminator("Snake");
-            });
+                BsonClassMap.RegisterClassMap<Rat>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetDiscriminator("Rat");
+                });
+            }
 
-            BsonClassMap.RegisterClassMap<Wall>(cm =>
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Snake)))
             {
-                cm.AutoMap();
-                cm.SetDiscriminator("Wall");
-            });
+                BsonClassMap.RegisterClassMap<Snake>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetDiscriminator("Snake");
+                });
+            }
         }
 
         public IMongoCollection<T> GetCollection<T>(string collectionName)

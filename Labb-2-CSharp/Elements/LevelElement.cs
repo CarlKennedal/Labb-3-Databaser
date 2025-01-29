@@ -8,7 +8,8 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-
+[BsonDiscriminator(Required = true)]
+[BsonKnownTypes(typeof(Player), typeof(Wall), typeof(Rat), typeof(Snake))]
 
 public abstract class LevelElement
 {

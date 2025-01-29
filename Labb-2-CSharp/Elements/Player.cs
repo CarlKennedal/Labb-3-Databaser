@@ -23,7 +23,7 @@ public class Player : LevelElement
 
     public int renderDistance = 5;
     public int move = 0;
-    public int turns = -1;
+    public int turns = 0;
     public override void Update()
     {
         turns++;
